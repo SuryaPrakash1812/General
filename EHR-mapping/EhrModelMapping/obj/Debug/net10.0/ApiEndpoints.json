@@ -1,0 +1,160 @@
+[
+  {
+    "ContainingType": "EhrModelMapping.Controllers.EhrConfigController",
+    "Method": "GetConfig",
+    "RelativePath": "api/ehr-config",
+    "HttpMethod": "",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "institutionId",
+        "Type": "System.Int32",
+        "IsRequired": false
+      },
+      {
+        "Name": "id",
+        "Type": "System.Int32",
+        "IsRequired": false
+      }
+    ],
+    "ReturnTypes": [
+      {
+        "Type": "EhrModelMapping.EhrModelConfigDto",
+        "MediaTypes": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
+        "StatusCode": 200
+      }
+    ]
+  },
+  {
+    "ContainingType": "EhrModelMapping.Controllers.EhrConfigController",
+    "Method": "AddConfig",
+    "RelativePath": "api/ehr-config",
+    "HttpMethod": "",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "dto",
+        "Type": "EhrModelMapping.EhrModelConfigDto",
+        "IsRequired": true
+      },
+      {
+        "Name": "user",
+        "Type": "System.String",
+        "IsRequired": false
+      }
+    ],
+    "ReturnTypes": [
+      {
+        "Type": "System.Int32",
+        "MediaTypes": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
+        "StatusCode": 200
+      }
+    ]
+  },
+  {
+    "ContainingType": "EhrModelMapping.Controllers.EhrConfigController",
+    "Method": "UpdateConfig",
+    "RelativePath": "api/ehr-config",
+    "HttpMethod": "",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "dto",
+        "Type": "EhrModelMapping.EhrModelConfigDto",
+        "IsRequired": true
+      },
+      {
+        "Name": "user",
+        "Type": "System.String",
+        "IsRequired": false
+      }
+    ],
+    "ReturnTypes": [
+      {
+        "Type": "System.Void",
+        "MediaTypes": [],
+        "StatusCode": 200
+      }
+    ]
+  },
+  {
+    "ContainingType": "EhrModelMapping.Controllers.EhrConfigController",
+    "Method": "Get",
+    "RelativePath": "api/ehr-config/{institutionId}/{id}",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "institutionId",
+        "Type": "System.Int32",
+        "IsRequired": true
+      },
+      {
+        "Name": "id",
+        "Type": "System.Int32",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "EhrModelMapping.Controllers.EhrConfigController",
+    "Method": "Add",
+    "RelativePath": "api/ehr-config/Add",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "dto",
+        "Type": "EhrModelMapping.EhrModelConfigDto",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "EhrModelMapping.Controllers.EhrConfigController",
+    "Method": "GetModels",
+    "RelativePath": "api/ehr-config/models/{institutionId}",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "institutionId",
+        "Type": "System.Int32",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "EhrModelMapping.Controllers.EhrConfigController",
+    "Method": "Update",
+    "RelativePath": "api/ehr-config/Update",
+    "HttpMethod": "PUT",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "dto",
+        "Type": "EhrModelMapping.EhrModelConfigDto",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  }
+]
