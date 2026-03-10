@@ -346,7 +346,10 @@
       <div class="logo-dot"></div>
       PortfolioAI
     </div>
-    <div class="badge">AI AGENT v1.0</div>
+    <div style="display:flex;align-items:center;gap:10px">
+      <div class="badge">AI AGENT v1.0</div>
+      <button class="btn btn-ghost" onclick="clearAllData()" style="font-size:0.7rem;padding:5px 10px;color:var(--danger);border-color:rgba(255,69,69,0.3)">🗑 Clear All</button>
+    </div>
   </div>
 </header>
 
@@ -552,17 +555,69 @@
 // ---- State ----
 let holdings = [];
 
-// ---- Default sample holdings ----
-const sampleHoldings = [
-  { name: "Parag Parikh Flexi Cap Fund", type: "MF", invested: 200000, current: 267000 },
-  { name: "Mirae Asset Emerging Bluechip", type: "MF", invested: 150000, current: 186000 },
-  { name: "HDFC Bank", type: "EQ", invested: 80000, current: 74000 },
-  { name: "Infosys", type: "EQ", invested: 60000, current: 71000 },
-  { name: "Nippon India Nifty 50 ETF", type: "ETF", invested: 50000, current: 58000 },
-];
+const STORAGE_KEY = 'portfolioai_holdings';
+const SETTINGS_KEY = 'portfolioai_settings';
+
+function saveHoldings() {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(holdings)); } catch(e) {}
+}
+
+function loadHoldings() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch(e) { return []; }
+}
+
+function saveSettings() {
+  try {
+    const settings = {
+      goal: document.getElementById('goal').value,
+      risk: document.getElementById('risk').value,
+      horizon: document.getElementById('horizon').value,
+      sip: document.getElementById('sip').value,
+      notes: document.getElementById('notes').value,
+      market: document.getElementById('market').value,
+      sectors: document.getElementById('sectors').value,
+      depth: document.getElementById('depth').value,
+    };
+    localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
+  } catch(e) {}
+}
+
+function loadSettings() {
+  try {
+    const raw = localStorage.getItem(SETTINGS_KEY);
+    if (!raw) return;
+    const s = JSON.parse(raw);
+    if (s.goal) document.getElementById('goal').value = s.goal;
+    if (s.risk) document.getElementById('risk').value = s.risk;
+    if (s.horizon) document.getElementById('horizon').value = s.horizon;
+    if (s.sip) document.getElementById('sip').value = s.sip;
+    if (s.notes) document.getElementById('notes').value = s.notes;
+    if (s.market) document.getElementById('market').value = s.market;
+    if (s.sectors) document.getElementById('sectors').value = s.sectors;
+    if (s.depth) document.getElementById('depth').value = s.depth;
+  } catch(e) {}
+}
+
+function clearAllData() {
+  if (!confirm('Clear all holdings and settings? This cannot be undone.')) return;
+  try { localStorage.removeItem(STORAGE_KEY); localStorage.removeItem(SETTINGS_KEY); } catch(e) {}
+  holdings = [];
+  renderHoldings();
+  updateSummary();
+}
 
 function init() {
-  holdings = [...sampleHoldings];
+  holdings = loadHoldings();
+  loadSettings();
+  // Auto-save settings on any change
+  ['goal','risk','horizon','sip','notes','market','sectors','depth'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener('change', saveSettings);
+    if (el) el.addEventListener('input', saveSettings);
+  });
   renderHoldings();
   updateSummary();
 }
@@ -577,6 +632,7 @@ function addHolding() {
     return;
   }
   holdings.push({ name, type, invested, current });
+  saveHoldings();
   document.getElementById('addName').value = '';
   document.getElementById('addInvested').value = '';
   document.getElementById('addCurrent').value = '';
@@ -586,6 +642,7 @@ function addHolding() {
 
 function removeHolding(i) {
   holdings.splice(i, 1);
+  saveHoldings();
   renderHoldings();
   updateSummary();
 }
@@ -599,7 +656,7 @@ function formatINR(n) {
 function renderHoldings() {
   const el = document.getElementById('holdingsList');
   if (holdings.length === 0) {
-    el.innerHTML = '<div style="color:var(--muted);font-size:0.82rem;padding:12px 0">No holdings yet. Add some above or use the sample data.</div>';
+    el.innerHTML = '<div style="color:var(--muted);font-size:0.82rem;padding:16px 0;text-align:center">No holdings yet. Add your first holding below — it will be saved automatically.</div>';
     return;
   }
   const totalCurrent = holdings.reduce((s,h)=>s+h.current,0);
