@@ -1,0 +1,999 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PortfolioAI — Smart Investment Agent</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@300;400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0c0f;
+    --surface: #111418;
+    --surface2: #181c22;
+    --border: #1e2430;
+    --accent: #00e5a0;
+    --accent2: #0070f3;
+    --warn: #f5a623;
+    --danger: #ff4545;
+    --text: #e8edf5;
+    --muted: #5a6378;
+    --muted2: #3a4255;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+  /* Background grid */
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background-image: linear-gradient(var(--border) 1px, transparent 1px),
+      linear-gradient(90deg, var(--border) 1px, transparent 1px);
+    background-size: 40px 40px;
+    opacity: 0.3;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .container { max-width: 1100px; margin: 0 auto; padding: 0 24px; position: relative; z-index: 1; }
+
+  /* Header */
+  header {
+    border-bottom: 1px solid var(--border);
+    padding: 20px 0;
+    position: sticky; top: 0;
+    background: rgba(10,12,15,0.92);
+    backdrop-filter: blur(12px);
+    z-index: 100;
+  }
+  .header-inner { display: flex; align-items: center; justify-content: space-between; }
+  .logo {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800; font-size: 1.3rem;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .logo-dot {
+    width: 10px; height: 10px; border-radius: 50%;
+    background: var(--accent);
+    box-shadow: 0 0 12px var(--accent);
+    animation: pulse 2s infinite;
+  }
+  @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.6;transform:scale(1.3)} }
+  .badge {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem; font-weight: 500;
+    padding: 3px 9px; border-radius: 20px;
+    border: 1px solid var(--accent);
+    color: var(--accent);
+    letter-spacing: 0.08em;
+  }
+
+  /* Hero */
+  .hero { padding: 60px 0 40px; text-align: center; }
+  .hero h1 {
+    font-family: 'Syne', sans-serif;
+    font-size: clamp(2rem, 5vw, 3.5rem);
+    font-weight: 800; line-height: 1.1;
+    background: linear-gradient(135deg, #fff 40%, var(--accent) 100%);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .hero p { color: var(--muted); margin-top: 14px; font-size: 1rem; max-width: 520px; margin-inline: auto; line-height: 1.6; }
+
+  /* Steps */
+  .steps { display: flex; gap: 8px; justify-content: center; margin: 28px 0 0; flex-wrap: wrap; }
+  .step {
+    display: flex; align-items: center; gap: 6px;
+    font-size: 0.78rem; color: var(--muted);
+    font-family: 'DM Mono', monospace;
+  }
+  .step-num {
+    width: 20px; height: 20px; border-radius: 50%;
+    background: var(--surface2); border: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.65rem; color: var(--accent);
+  }
+  .step-arrow { color: var(--muted2); }
+
+  /* Main grid */
+  .main-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 36px; }
+  @media(max-width:720px){ .main-grid { grid-template-columns: 1fr; } }
+
+  /* Cards */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 24px;
+    position: relative;
+    overflow: hidden;
+    transition: border-color 0.2s;
+  }
+  .card:hover { border-color: var(--muted2); }
+  .card-full { grid-column: 1 / -1; }
+  .card-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 0.85rem; font-weight: 700;
+    letter-spacing: 0.06em; text-transform: uppercase;
+    color: var(--muted);
+    display: flex; align-items: center; gap: 8px;
+    margin-bottom: 18px;
+  }
+  .card-title-icon { font-size: 1rem; }
+
+  /* Portfolio table */
+  .holdings-header {
+    display: grid; grid-template-columns: 1fr 80px 80px 60px;
+    gap: 8px; padding: 0 4px 8px;
+    border-bottom: 1px solid var(--border);
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem; color: var(--muted);
+    text-transform: uppercase; letter-spacing: 0.08em;
+  }
+  .holdings-list { display: flex; flex-direction: column; gap: 2px; margin-top: 6px; }
+  .holding-row {
+    display: grid; grid-template-columns: 1fr 80px 80px 60px;
+    gap: 8px; padding: 10px 4px;
+    border-radius: 8px;
+    align-items: center;
+    transition: background 0.15s;
+    cursor: pointer;
+  }
+  .holding-row:hover { background: var(--surface2); }
+  .holding-name { font-size: 0.88rem; font-weight: 500; }
+  .holding-type {
+    font-size: 0.65rem; color: var(--muted);
+    font-family: 'DM Mono', monospace;
+  }
+  .holding-val {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.82rem; text-align: right;
+  }
+  .holding-alloc {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.82rem; text-align: right;
+    color: var(--muted);
+  }
+  .tag {
+    display: inline-block; font-size: 0.6rem;
+    padding: 2px 7px; border-radius: 4px;
+    font-family: 'DM Mono', monospace;
+    font-weight: 500; letter-spacing: 0.04em;
+  }
+  .tag-mf { background: rgba(0,112,243,0.15); color: #4da6ff; border: 1px solid rgba(0,112,243,0.3); }
+  .tag-eq { background: rgba(0,229,160,0.12); color: var(--accent); border: 1px solid rgba(0,229,160,0.3); }
+  .tag-etf { background: rgba(245,166,35,0.12); color: var(--warn); border: 1px solid rgba(245,166,35,0.3); }
+
+  /* Input form */
+  label { font-size: 0.78rem; color: var(--muted); display: block; margin-bottom: 6px; font-family: 'DM Mono', monospace; }
+  input, select, textarea {
+    width: 100%; padding: 10px 14px;
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 10px; color: var(--text);
+    font-family: 'DM Sans', sans-serif; font-size: 0.88rem;
+    outline: none; transition: border-color 0.2s;
+  }
+  input:focus, select:focus, textarea:focus { border-color: var(--accent); }
+  textarea { resize: vertical; min-height: 80px; }
+  select option { background: var(--surface2); }
+  .form-row { display: grid; grid-template-columns: 1fr 1fr 100px; gap: 10px; margin-bottom: 10px; }
+  @media(max-width:500px){ .form-row { grid-template-columns: 1fr; } }
+
+  /* Buttons */
+  .btn {
+    padding: 10px 20px; border-radius: 10px;
+    border: none; cursor: pointer;
+    font-family: 'Syne', sans-serif; font-weight: 700;
+    font-size: 0.85rem; transition: all 0.2s;
+  }
+  .btn-accent {
+    background: var(--accent); color: #000;
+    box-shadow: 0 0 20px rgba(0,229,160,0.25);
+  }
+  .btn-accent:hover { background: #00ffb3; box-shadow: 0 0 30px rgba(0,229,160,0.4); transform: translateY(-1px); }
+  .btn-accent:disabled { background: var(--muted2); color: var(--muted); box-shadow: none; cursor: not-allowed; transform: none; }
+  .btn-ghost {
+    background: transparent; color: var(--muted);
+    border: 1px solid var(--border);
+    font-size: 0.75rem; padding: 6px 12px;
+  }
+  .btn-ghost:hover { border-color: var(--muted); color: var(--text); }
+  .btn-danger { background: rgba(255,69,69,0.15); color: var(--danger); border: 1px solid rgba(255,69,69,0.3); font-size: 0.75rem; padding: 6px 10px; }
+  .btn-danger:hover { background: rgba(255,69,69,0.25); }
+
+  /* Add holding row */
+  .add-row { display: flex; gap: 8px; flex-wrap: wrap; align-items: flex-end; }
+  .add-row .form-field { flex: 1; min-width: 120px; }
+
+  /* Portfolio summary */
+  .summary-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 12px; }
+  @media(max-width:480px){ .summary-grid { grid-template-columns: 1fr 1fr; } }
+  .summary-item { background: var(--surface2); border-radius: 10px; padding: 14px 16px; }
+  .summary-label { font-size: 0.65rem; color: var(--muted); font-family: 'DM Mono', monospace; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 6px; }
+  .summary-value { font-family: 'Syne', sans-serif; font-size: 1.2rem; font-weight: 700; }
+  .positive { color: var(--accent); }
+  .negative { color: var(--danger); }
+  .neutral { color: var(--text); }
+
+  /* Donut chart */
+  .donut-wrap { display: flex; align-items: center; gap: 20px; flex-wrap: wrap; }
+  .donut-legend { display: flex; flex-direction: column; gap: 8px; }
+  .legend-item { display: flex; align-items: center; gap: 8px; font-size: 0.8rem; }
+  .legend-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+
+  /* Analysis output */
+  .analysis-box {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px 24px;
+    font-size: 0.88rem;
+    line-height: 1.8;
+    color: var(--text);
+    min-height: 120px;
+    position: relative;
+  }
+  .analysis-box.loading { display: flex; align-items: center; gap: 12px; color: var(--muted); }
+  .analysis-section { margin-bottom: 20px; }
+  .analysis-section:last-child { margin-bottom: 0; }
+  .analysis-section h3 {
+    font-family: 'Syne', sans-serif; font-size: 0.85rem;
+    color: var(--accent); margin-bottom: 8px;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .analysis-section p { color: #b8c4d8; font-size: 0.86rem; line-height: 1.7; }
+
+  /* Recommendation cards */
+  .rec-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  @media(max-width:560px){ .rec-grid { grid-template-columns: 1fr; } }
+  .rec-card {
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 12px; padding: 16px;
+    position: relative; overflow: hidden;
+  }
+  .rec-card.buy { border-color: rgba(0,229,160,0.3); }
+  .rec-card.hold { border-color: rgba(245,166,35,0.3); }
+  .rec-card.sell { border-color: rgba(255,69,69,0.3); }
+  .rec-action {
+    font-family: 'Syne', sans-serif; font-size: 0.7rem;
+    font-weight: 800; letter-spacing: 0.1em;
+    text-transform: uppercase; margin-bottom: 6px;
+  }
+  .rec-card.buy .rec-action { color: var(--accent); }
+  .rec-card.hold .rec-action { color: var(--warn); }
+  .rec-card.sell .rec-action { color: var(--danger); }
+  .rec-name { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 0.95rem; margin-bottom: 6px; }
+  .rec-reason { font-size: 0.78rem; color: var(--muted); line-height: 1.5; }
+
+  /* Spinner */
+  .spinner {
+    width: 20px; height: 20px; border-radius: 50%;
+    border: 2px solid var(--border);
+    border-top-color: var(--accent);
+    animation: spin 0.8s linear infinite;
+    flex-shrink: 0;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* Tabs */
+  .tabs { display: flex; gap: 4px; margin-bottom: 20px; background: var(--surface2); border-radius: 10px; padding: 4px; }
+  .tab {
+    flex: 1; padding: 8px; border-radius: 8px; border: none;
+    background: transparent; color: var(--muted);
+    font-family: 'Syne', sans-serif; font-weight: 600;
+    font-size: 0.78rem; cursor: pointer; transition: all 0.2s;
+  }
+  .tab.active { background: var(--surface); color: var(--text); }
+
+  /* Progress bar */
+  .progress-bar { height: 4px; background: var(--border); border-radius: 2px; overflow: hidden; margin-top: 6px; }
+  .progress-fill { height: 100%; border-radius: 2px; transition: width 0.6s ease; }
+
+  /* News feed */
+  .news-item { padding: 12px 0; border-bottom: 1px solid var(--border); }
+  .news-item:last-child { border-bottom: none; }
+  .news-meta { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+  .news-source { font-size: 0.65rem; color: var(--muted); font-family: 'DM Mono', monospace; }
+  .news-sentiment {
+    font-size: 0.6rem; font-family: 'DM Mono', monospace;
+    padding: 2px 6px; border-radius: 4px;
+  }
+  .sent-pos { background: rgba(0,229,160,0.15); color: var(--accent); }
+  .sent-neg { background: rgba(255,69,69,0.15); color: var(--danger); }
+  .sent-neu { background: rgba(90,99,120,0.3); color: var(--muted); }
+  .news-title { font-size: 0.84rem; line-height: 1.5; }
+
+  /* Divider */
+  .divider { border: none; border-top: 1px solid var(--border); margin: 20px 0; }
+
+  /* Glow accents */
+  .glow-accent {
+    position: absolute; top: -30px; right: -30px;
+    width: 100px; height: 100px; border-radius: 50%;
+    background: radial-gradient(circle, rgba(0,229,160,0.08) 0%, transparent 70%);
+    pointer-events: none;
+  }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+  .text-muted { color: var(--muted); }
+  .text-small { font-size: 0.78rem; }
+  .mt-8 { margin-top: 8px; }
+  .mt-12 { margin-top: 12px; }
+  .mt-16 { margin-top: 16px; }
+  .flex { display: flex; }
+  .items-center { align-items: center; }
+  .justify-between { justify-content: space-between; }
+  .gap-8 { gap: 8px; }
+  .gap-12 { gap: 12px; }
+
+  footer { padding: 40px 0 24px; text-align: center; color: var(--muted); font-size: 0.75rem; border-top: 1px solid var(--border); margin-top: 60px; }
+  footer span { color: var(--accent); }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="container header-inner">
+    <div class="logo">
+      <div class="logo-dot"></div>
+      PortfolioAI
+    </div>
+    <div class="badge">AI AGENT v1.0</div>
+  </div>
+</header>
+
+<div class="container">
+  <div class="hero">
+    <h1>Your Personal<br>Investment Intelligence Agent</h1>
+    <p>Add your Mutual Funds & Stocks, let AI analyse your portfolio with live market news, and get smart investment recommendations.</p>
+    <div class="steps">
+      <div class="step"><div class="step-num">1</div> Add Holdings</div>
+      <div class="step-arrow">→</div>
+      <div class="step"><div class="step-num">2</div> Analyse Portfolio</div>
+      <div class="step-arrow">→</div>
+      <div class="step"><div class="step-num">3</div> Get Recommendations</div>
+    </div>
+  </div>
+
+  <!-- Holdings Input -->
+  <div class="main-grid">
+    <div class="card" style="grid-column:1/-1">
+      <div class="glow-accent"></div>
+      <div class="card-title"><span class="card-title-icon">📊</span> My Portfolio Holdings</div>
+
+      <div id="holdingsList"></div>
+
+      <div style="margin-top:16px">
+        <div class="card-title" style="margin-bottom:12px"><span class="card-title-icon">➕</span> Add Holding</div>
+        <div class="add-row">
+          <div class="add-row" style="flex:1;flex-wrap:wrap;gap:10px">
+            <div class="form-field" style="min-width:160px">
+              <label>Name / Symbol</label>
+              <input type="text" id="addName" placeholder="e.g. Parag Parikh Flexi Cap / INFY" />
+            </div>
+            <div class="form-field" style="min-width:100px;max-width:120px">
+              <label>Type</label>
+              <select id="addType">
+                <option value="MF">Mutual Fund</option>
+                <option value="EQ">Stock / Equity</option>
+                <option value="ETF">ETF</option>
+              </select>
+            </div>
+            <div class="form-field" style="min-width:110px;max-width:140px">
+              <label>Invested (₹)</label>
+              <input type="number" id="addInvested" placeholder="50000" />
+            </div>
+            <div class="form-field" style="min-width:110px;max-width:140px">
+              <label>Current Value (₹)</label>
+              <input type="number" id="addCurrent" placeholder="57000" />
+            </div>
+            <div style="display:flex;align-items:flex-end">
+              <button class="btn btn-accent" onclick="addHolding()" style="white-space:nowrap">Add</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="portfolioSummary" style="display:none;margin-top:24px">
+        <hr class="divider">
+        <div class="card-title"><span class="card-title-icon">📈</span> Portfolio Summary</div>
+        <div class="summary-grid" id="summaryGrid"></div>
+        <div class="mt-16" id="allocationChart"></div>
+      </div>
+    </div>
+
+    <!-- Analysis config -->
+    <div class="card">
+      <div class="card-title"><span class="card-title-icon">⚙️</span> Analysis Settings</div>
+      <div style="display:flex;flex-direction:column;gap:14px">
+        <div>
+          <label>Investment Goal</label>
+          <select id="goal">
+            <option>Wealth Creation (Long Term)</option>
+            <option>Retirement Planning</option>
+            <option>Child Education</option>
+            <option>Short Term Returns (1-3 yr)</option>
+            <option>Tax Saving (ELSS)</option>
+          </select>
+        </div>
+        <div>
+          <label>Risk Appetite</label>
+          <select id="risk">
+            <option>High (Aggressive)</option>
+            <option>Medium (Balanced)</option>
+            <option>Low (Conservative)</option>
+          </select>
+        </div>
+        <div>
+          <label>Investment Horizon</label>
+          <select id="horizon">
+            <option>10+ Years</option>
+            <option>5-10 Years</option>
+            <option>3-5 Years</option>
+            <option>1-3 Years</option>
+            <option>Less than 1 Year</option>
+          </select>
+        </div>
+        <div>
+          <label>Monthly SIP Budget (₹)</label>
+          <input type="number" id="sip" placeholder="e.g. 10000" />
+        </div>
+        <div>
+          <label>Additional Notes (optional)</label>
+          <textarea id="notes" placeholder="e.g. Already have PPF, focus on equity, open to international funds..."></textarea>
+        </div>
+      </div>
+    </div>
+
+    <!-- Market focus -->
+    <div class="card">
+      <div class="card-title"><span class="card-title-icon">🌐</span> Market Intelligence Focus</div>
+      <div style="display:flex;flex-direction:column;gap:14px">
+        <div>
+          <label>Market / Sector Focus</label>
+          <select id="market">
+            <option>Indian Markets (NSE/BSE)</option>
+            <option>Indian + US Markets</option>
+            <option>Global Markets</option>
+          </select>
+        </div>
+        <div>
+          <label>Sectors of Interest (comma separated)</label>
+          <input type="text" id="sectors" placeholder="e.g. IT, Banking, Pharma, EV, FMCG" />
+        </div>
+        <div>
+          <label>Analysis Depth</label>
+          <select id="depth">
+            <option>Comprehensive (All Sections)</option>
+            <option>Quick Summary</option>
+            <option>Recommendations Only</option>
+          </select>
+        </div>
+        <div style="background:var(--surface2);border-radius:10px;padding:14px;margin-top:4px">
+          <div style="font-size:0.75rem;color:var(--muted);margin-bottom:8px;font-family:'DM Mono',monospace">AGENT CAPABILITIES</div>
+          <div style="display:flex;flex-direction:column;gap:6px">
+            <div class="flex items-center gap-8" style="font-size:0.8rem"><span style="color:var(--accent)">✓</span> Live market news analysis</div>
+            <div class="flex items-center gap-8" style="font-size:0.8rem"><span style="color:var(--accent)">✓</span> Portfolio diversification check</div>
+            <div class="flex items-center gap-8" style="font-size:0.8rem"><span style="color:var(--accent)">✓</span> Risk-adjusted recommendations</div>
+            <div class="flex items-center gap-8" style="font-size:0.8rem"><span style="color:var(--accent)">✓</span> SIP & lump sum suggestions</div>
+            <div class="flex items-center gap-8" style="font-size:0.8rem"><span style="color:var(--accent)">✓</span> Sector & macro sentiment</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Analyse Button -->
+  <div style="text-align:center;margin:28px 0">
+    <button class="btn btn-accent" id="analyseBtn" onclick="runAnalysis()" style="padding:14px 48px;font-size:1rem">
+      🔍 Analyse Portfolio & Get Recommendations
+    </button>
+    <div class="text-muted text-small" style="margin-top:10px">Powered by Claude AI with live web search</div>
+  </div>
+
+  <!-- Results -->
+  <div id="resultsSection" style="display:none">
+    <div class="main-grid">
+      <!-- Full Analysis -->
+      <div class="card card-full">
+        <div class="card-title"><span class="card-title-icon">🤖</span> AI Portfolio Analysis</div>
+        <div class="tabs">
+          <button class="tab active" onclick="switchTab('analysis')">Portfolio Analysis</button>
+          <button class="tab" onclick="switchTab('news')">Market News</button>
+          <button class="tab" onclick="switchTab('recs')">Recommendations</button>
+        </div>
+
+        <!-- Analysis tab -->
+        <div id="tab-analysis">
+          <div id="analysisContent" class="analysis-box loading">
+            <div class="spinner"></div>
+            <span>Analysing your portfolio and fetching live market data...</span>
+          </div>
+        </div>
+
+        <!-- News tab -->
+        <div id="tab-news" style="display:none">
+          <div id="newsContent" class="analysis-box loading">
+            <div class="spinner"></div>
+            <span>Searching for latest market news...</span>
+          </div>
+        </div>
+
+        <!-- Recs tab -->
+        <div id="tab-recs" style="display:none">
+          <div id="recsContent">
+            <div class="analysis-box loading">
+              <div class="spinner"></div>
+              <span>Generating personalised recommendations...</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<footer>
+  <div class="container">
+    <p>PortfolioAI is for informational purposes only. <span>Not financial advice.</span> Always consult a SEBI-registered advisor before investing.</p>
+  </div>
+</footer>
+
+<script>
+// ---- State ----
+let holdings = [];
+
+// ---- Default sample holdings ----
+const sampleHoldings = [
+  { name: "Parag Parikh Flexi Cap Fund", type: "MF", invested: 200000, current: 267000 },
+  { name: "Mirae Asset Emerging Bluechip", type: "MF", invested: 150000, current: 186000 },
+  { name: "HDFC Bank", type: "EQ", invested: 80000, current: 74000 },
+  { name: "Infosys", type: "EQ", invested: 60000, current: 71000 },
+  { name: "Nippon India Nifty 50 ETF", type: "ETF", invested: 50000, current: 58000 },
+];
+
+function init() {
+  holdings = [...sampleHoldings];
+  renderHoldings();
+  updateSummary();
+}
+
+function addHolding() {
+  const name = document.getElementById('addName').value.trim();
+  const type = document.getElementById('addType').value;
+  const invested = parseFloat(document.getElementById('addInvested').value);
+  const current = parseFloat(document.getElementById('addCurrent').value);
+  if (!name || isNaN(invested) || isNaN(current)) {
+    alert('Please fill in all fields correctly.');
+    return;
+  }
+  holdings.push({ name, type, invested, current });
+  document.getElementById('addName').value = '';
+  document.getElementById('addInvested').value = '';
+  document.getElementById('addCurrent').value = '';
+  renderHoldings();
+  updateSummary();
+}
+
+function removeHolding(i) {
+  holdings.splice(i, 1);
+  renderHoldings();
+  updateSummary();
+}
+
+function formatINR(n) {
+  if (n >= 100000) return '₹' + (n/100000).toFixed(1) + 'L';
+  if (n >= 1000) return '₹' + (n/1000).toFixed(1) + 'K';
+  return '₹' + n.toFixed(0);
+}
+
+function renderHoldings() {
+  const el = document.getElementById('holdingsList');
+  if (holdings.length === 0) {
+    el.innerHTML = '<div style="color:var(--muted);font-size:0.82rem;padding:12px 0">No holdings yet. Add some above or use the sample data.</div>';
+    return;
+  }
+  const totalCurrent = holdings.reduce((s,h)=>s+h.current,0);
+  el.innerHTML = `
+    <div class="holdings-header">
+      <div>Name</div><div style="text-align:right">Invested</div><div style="text-align:right">Current</div><div style="text-align:right">%</div>
+    </div>
+    <div class="holdings-list">
+      ${holdings.map((h,i) => {
+        const pct = ((h.current/totalCurrent)*100).toFixed(1);
+        const gain = h.current - h.invested;
+        const gainPct = ((gain/h.invested)*100).toFixed(1);
+        const gainColor = gain >= 0 ? 'var(--accent)' : 'var(--danger)';
+        return `
+          <div class="holding-row">
+            <div>
+              <div class="holding-name">${h.name}</div>
+              <div style="display:flex;align-items:center;gap:6px;margin-top:2px">
+                <span class="tag tag-${h.type.toLowerCase()}">${h.type}</span>
+                <span style="font-size:0.68rem;color:${gainColor};font-family:'DM Mono',monospace">${gain>=0?'+':''}${gainPct}%</span>
+              </div>
+            </div>
+            <div class="holding-val">${formatINR(h.invested)}</div>
+            <div class="holding-val" style="color:${gainColor}">${formatINR(h.current)}</div>
+            <div style="display:flex;align-items:center;gap:6px;justify-content:flex-end">
+              <span class="holding-alloc">${pct}%</span>
+              <button class="btn btn-danger" onclick="removeHolding(${i})" style="padding:2px 6px;font-size:0.65rem;line-height:1">✕</button>
+            </div>
+          </div>`;
+      }).join('')}
+    </div>`;
+}
+
+function updateSummary() {
+  const summaryEl = document.getElementById('portfolioSummary');
+  if (holdings.length === 0) { summaryEl.style.display = 'none'; return; }
+  summaryEl.style.display = 'block';
+
+  const totalInvested = holdings.reduce((s,h)=>s+h.invested,0);
+  const totalCurrent = holdings.reduce((s,h)=>s+h.current,0);
+  const totalGain = totalCurrent - totalInvested;
+  const totalGainPct = ((totalGain/totalInvested)*100).toFixed(1);
+  const mfCount = holdings.filter(h=>h.type==='MF').length;
+  const eqCount = holdings.filter(h=>h.type==='EQ').length;
+  const etfCount = holdings.filter(h=>h.type==='ETF').length;
+
+  document.getElementById('summaryGrid').innerHTML = `
+    <div class="summary-item">
+      <div class="summary-label">Total Invested</div>
+      <div class="summary-value neutral">${formatINR(totalInvested)}</div>
+    </div>
+    <div class="summary-item">
+      <div class="summary-label">Current Value</div>
+      <div class="summary-value neutral">${formatINR(totalCurrent)}</div>
+    </div>
+    <div class="summary-item">
+      <div class="summary-label">Total P&L</div>
+      <div class="summary-value ${totalGain>=0?'positive':'negative'}">${totalGain>=0?'+':''}${formatINR(totalGain)} (${totalGainPct}%)</div>
+    </div>`;
+
+  // Allocation breakdown
+  const types = [
+    {label:'Mutual Funds', count:mfCount, color:'#4da6ff', value: holdings.filter(h=>h.type==='MF').reduce((s,h)=>s+h.current,0)},
+    {label:'Equities', count:eqCount, color:'#00e5a0', value: holdings.filter(h=>h.type==='EQ').reduce((s,h)=>s+h.current,0)},
+    {label:'ETFs', count:etfCount, color:'#f5a623', value: holdings.filter(h=>h.type==='ETF').reduce((s,h)=>s+h.current,0)},
+  ].filter(t=>t.count>0);
+
+  let chartHtml = '<div style="margin-top:16px"><div class="card-title"><span class="card-title-icon">🥧</span> Asset Allocation</div><div style="display:flex;flex-direction:column;gap:10px">';
+  types.forEach(t => {
+    const pct = ((t.value/totalCurrent)*100).toFixed(1);
+    chartHtml += `<div>
+      <div class="flex justify-between items-center" style="margin-bottom:4px">
+        <div class="flex items-center gap-8"><div class="legend-dot" style="background:${t.color}"></div><span style="font-size:0.82rem">${t.label} (${t.count})</span></div>
+        <span style="font-family:'DM Mono',monospace;font-size:0.78rem;color:var(--muted)">${pct}% · ${formatINR(t.value)}</span>
+      </div>
+      <div class="progress-bar"><div class="progress-fill" style="width:${pct}%;background:${t.color}"></div></div>
+    </div>`;
+  });
+  chartHtml += '</div></div>';
+  document.getElementById('allocationChart').innerHTML = chartHtml;
+}
+
+function switchTab(tab) {
+  ['analysis','news','recs'].forEach(t => {
+    document.getElementById('tab-'+t).style.display = t===tab?'block':'none';
+    document.querySelectorAll('.tab')[['analysis','news','recs'].indexOf(t)].classList.toggle('active', t===tab);
+  });
+}
+
+async function runAnalysis() {
+  if (holdings.length === 0) { alert('Please add at least one holding first.'); return; }
+
+  const btn = document.getElementById('analyseBtn');
+  btn.disabled = true; btn.textContent = '⏳ Analysing...';
+
+  document.getElementById('resultsSection').style.display = 'block';
+  document.getElementById('resultsSection').scrollIntoView({behavior:'smooth',block:'start'});
+
+  // Reset tabs
+  document.getElementById('analysisContent').className = 'analysis-box loading';
+  document.getElementById('analysisContent').innerHTML = '<div class="spinner"></div><span>Analysing your portfolio and fetching live market data...</span>';
+  document.getElementById('newsContent').className = 'analysis-box loading';
+  document.getElementById('newsContent').innerHTML = '<div class="spinner"></div><span>Searching for latest market news...</span>';
+  document.getElementById('recsContent').innerHTML = '<div class="analysis-box loading"><div class="spinner"></div><span>Generating personalised recommendations...</span></div>';
+
+  const goal = document.getElementById('goal').value;
+  const risk = document.getElementById('risk').value;
+  const horizon = document.getElementById('horizon').value;
+  const sip = document.getElementById('sip').value;
+  const notes = document.getElementById('notes').value;
+  const market = document.getElementById('market').value;
+  const sectors = document.getElementById('sectors').value;
+  const depth = document.getElementById('depth').value;
+
+  const totalInvested = holdings.reduce((s,h)=>s+h.invested,0);
+  const totalCurrent = holdings.reduce((s,h)=>s+h.current,0);
+  const totalGain = totalCurrent - totalInvested;
+  const totalGainPct = ((totalGain/totalInvested)*100).toFixed(2);
+
+  const holdingsSummary = holdings.map(h => {
+    const gain = ((h.current-h.invested)/h.invested*100).toFixed(1);
+    const alloc = ((h.current/totalCurrent)*100).toFixed(1);
+    return `- ${h.name} [${h.type}]: Invested ₹${h.invested.toLocaleString()}, Current ₹${h.current.toLocaleString()}, P&L: ${gain}%, Allocation: ${alloc}%`;
+  }).join('\n');
+
+  const prompt = `You are an expert Indian financial advisor and portfolio analyst AI agent. You have web search capability to get the LATEST market news.
+
+PORTFOLIO DETAILS:
+${holdingsSummary}
+
+PORTFOLIO STATS:
+- Total Invested: ₹${totalInvested.toLocaleString()}
+- Current Value: ₹${totalCurrent.toLocaleString()}
+- Overall P&L: ${totalGainPct}% (₹${totalGain.toLocaleString()})
+- Holdings: ${holdings.length} (${holdings.filter(h=>h.type==='MF').length} MFs, ${holdings.filter(h=>h.type==='EQ').length} Stocks, ${holdings.filter(h=>h.type==='ETF').length} ETFs)
+
+INVESTOR PROFILE:
+- Goal: ${goal}
+- Risk Appetite: ${risk}
+- Investment Horizon: ${horizon}
+- Monthly SIP Budget: ₹${sip || 'Not specified'}
+- Market Focus: ${market}
+- Sectors of Interest: ${sectors || 'General'}
+- Depth: ${depth}
+- Additional Notes: ${notes || 'None'}
+
+Please use your web search tool to find the LATEST news (within last 1-2 weeks) about:
+1. Indian stock market / Sensex / Nifty performance
+2. Any news specific to the holdings in the portfolio
+3. Key sectors mentioned
+
+Then provide a COMPREHENSIVE analysis in this EXACT JSON format (respond with ONLY valid JSON, no markdown):
+
+{
+  "portfolioAnalysis": {
+    "overallHealth": "Good/Fair/Needs Attention",
+    "healthScore": 72,
+    "summary": "2-3 sentence overall portfolio health summary",
+    "strengths": ["strength 1", "strength 2", "strength 3"],
+    "concerns": ["concern 1", "concern 2"],
+    "diversification": "Assessment of diversification across asset class, sector, market cap",
+    "riskAssessment": "Is the current portfolio aligned with stated risk appetite?"
+  },
+  "marketIntelligence": {
+    "marketSentiment": "Bullish/Bearish/Neutral",
+    "sentimentScore": 65,
+    "keyDevelopments": [
+      {"headline": "Brief headline", "impact": "positive/negative/neutral", "relevance": "Why relevant to this portfolio"}
+    ],
+    "sectorOutlook": [
+      {"sector": "IT", "outlook": "positive/negative/neutral", "reason": "Brief reason"}
+    ],
+    "macroFactors": "Key macro factors (RBI policy, global cues, FII/DII flows, inflation) and their impact"
+  },
+  "recommendations": {
+    "immediate": [
+      {"action": "BUY/HOLD/SELL/SIP", "instrument": "Fund/Stock name", "reason": "Specific reason", "amount": "Suggested amount if applicable"}
+    ],
+    "newOpportunities": [
+      {"type": "MF/EQ/ETF", "name": "Instrument name", "rationale": "Why it fits this portfolio and goal", "suggestedAllocation": "% or amount"}
+    ],
+    "rebalancing": "Specific rebalancing advice if needed",
+    "sipStrategy": "Specific SIP strategy recommendation"
+  },
+  "marketNews": [
+    {"title": "News headline", "source": "Source name", "sentiment": "positive/negative/neutral", "portfolioImpact": "How this affects the portfolio"}
+  ]
+}`;
+
+  try {
+    const response = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model: "claude-sonnet-4-20250514",
+        max_tokens: 4000,
+        tools: [{ type: "web_search_20250305", name: "web_search" }],
+        messages: [{ role: "user", content: prompt }]
+      })
+    });
+
+    const data = await response.json();
+    const fullText = data.content.map(i => i.type === 'text' ? i.text : '').filter(Boolean).join('\n');
+
+    let result;
+    try {
+      const cleaned = fullText.replace(/```json\n?/g,'').replace(/```\n?/g,'').trim();
+      // Find JSON object
+      const jsonMatch = cleaned.match(/\{[\s\S]*\}/);
+      result = JSON.parse(jsonMatch ? jsonMatch[0] : cleaned);
+    } catch(e) {
+      // Fallback: display raw text
+      document.getElementById('analysisContent').className = 'analysis-box';
+      document.getElementById('analysisContent').innerHTML = `<div style="white-space:pre-wrap;font-size:0.86rem;line-height:1.7">${fullText}</div>`;
+      btn.disabled = false; btn.textContent = '🔍 Analyse Portfolio & Get Recommendations';
+      return;
+    }
+
+    renderAnalysis(result);
+    renderNews(result);
+    renderRecommendations(result);
+
+  } catch(err) {
+    document.getElementById('analysisContent').className = 'analysis-box';
+    document.getElementById('analysisContent').innerHTML = `<div style="color:var(--danger)">Error: ${err.message}. Please try again.</div>`;
+  }
+
+  btn.disabled = false; btn.textContent = '🔍 Analyse Portfolio & Get Recommendations';
+}
+
+function scoreColor(score) {
+  if (score >= 70) return 'var(--accent)';
+  if (score >= 50) return 'var(--warn)';
+  return 'var(--danger)';
+}
+
+function renderAnalysis(result) {
+  const pa = result.portfolioAnalysis || {};
+  const mi = result.marketIntelligence || {};
+  const rec = result.recommendations || {};
+
+  const sentimentColor = {'Bullish':'var(--accent)','Bearish':'var(--danger)','Neutral':'var(--warn)'}[mi.marketSentiment] || 'var(--muted)';
+
+  let html = `
+    <div class="analysis-section">
+      <h3>🏥 Portfolio Health</h3>
+      <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap;margin-bottom:12px">
+        <div style="text-align:center">
+          <div style="font-family:'Syne',sans-serif;font-size:2rem;font-weight:800;color:${scoreColor(pa.healthScore||70)}">${pa.healthScore||'—'}</div>
+          <div style="font-size:0.65rem;color:var(--muted);font-family:'DM Mono',monospace">HEALTH SCORE</div>
+        </div>
+        <div style="flex:1">
+          <div style="font-weight:600;margin-bottom:4px">${pa.overallHealth||''}</div>
+          <p>${pa.summary||''}</p>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px">
+        <div style="background:rgba(0,229,160,0.06);border:1px solid rgba(0,229,160,0.2);border-radius:10px;padding:12px">
+          <div style="font-size:0.7rem;color:var(--accent);font-family:'DM Mono',monospace;margin-bottom:8px">STRENGTHS</div>
+          ${(pa.strengths||[]).map(s=>`<div style="font-size:0.82rem;margin-bottom:4px">✓ ${s}</div>`).join('')}
+        </div>
+        <div style="background:rgba(255,69,69,0.06);border:1px solid rgba(255,69,69,0.2);border-radius:10px;padding:12px">
+          <div style="font-size:0.7rem;color:var(--danger);font-family:'DM Mono',monospace;margin-bottom:8px">CONCERNS</div>
+          ${(pa.concerns||[]).map(c=>`<div style="font-size:0.82rem;margin-bottom:4px">⚠ ${c}</div>`).join('')}
+        </div>
+      </div>
+    </div>
+
+    <div class="analysis-section">
+      <h3>🌐 Market Intelligence</h3>
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;flex-wrap:wrap">
+        <div style="background:var(--surface2);border-radius:8px;padding:10px 16px">
+          <div style="font-size:0.65rem;color:var(--muted);font-family:'DM Mono',monospace">MARKET SENTIMENT</div>
+          <div style="font-family:'Syne',sans-serif;font-weight:700;color:${sentimentColor}">${mi.marketSentiment||'—'}</div>
+        </div>
+        <div style="background:var(--surface2);border-radius:8px;padding:10px 16px">
+          <div style="font-size:0.65rem;color:var(--muted);font-family:'DM Mono',monospace">SENTIMENT SCORE</div>
+          <div style="font-family:'Syne',sans-serif;font-weight:700;color:${scoreColor(mi.sentimentScore||60)}">${mi.sentimentScore||'—'}/100</div>
+        </div>
+      </div>
+      ${mi.macroFactors ? `<p style="margin-bottom:12px">${mi.macroFactors}</p>` : ''}
+      ${(mi.sectorOutlook||[]).length > 0 ? `
+        <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:10px">
+          ${(mi.sectorOutlook||[]).map(s=>{
+            const c = s.outlook==='positive'?'var(--accent)':s.outlook==='negative'?'var(--danger)':'var(--warn)';
+            return `<div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:8px 12px;font-size:0.78rem">
+              <span style="color:${c};font-weight:600">${s.sector}</span>
+              <span style="color:var(--muted)"> · ${s.outlook}</span>
+              <div style="color:var(--muted);font-size:0.72rem;margin-top:2px">${s.reason||''}</div>
+            </div>`;
+          }).join('')}
+        </div>` : ''}
+    </div>
+
+    <div class="analysis-section">
+      <h3>⚖️ Diversification & Risk</h3>
+      <p>${pa.diversification||''}</p>
+      ${pa.riskAssessment ? `<p style="margin-top:8px;padding:10px 14px;background:rgba(245,166,35,0.08);border:1px solid rgba(245,166,35,0.2);border-radius:8px">${pa.riskAssessment}</p>` : ''}
+    </div>
+
+    ${rec.rebalancing ? `<div class="analysis-section">
+      <h3>🔄 Rebalancing Advice</h3>
+      <p>${rec.rebalancing}</p>
+    </div>` : ''}
+
+    ${rec.sipStrategy ? `<div class="analysis-section">
+      <h3>📅 SIP Strategy</h3>
+      <p>${rec.sipStrategy}</p>
+    </div>` : ''}
+  `;
+
+  document.getElementById('analysisContent').className = 'analysis-box';
+  document.getElementById('analysisContent').innerHTML = html;
+}
+
+function renderNews(result) {
+  const mi = result.marketIntelligence || {};
+  const news = result.marketNews || [];
+
+  let html = '';
+  if ((mi.keyDevelopments||[]).length > 0) {
+    html += `<div class="analysis-section"><h3>📰 Key Market Developments</h3>`;
+    html += (mi.keyDevelopments||[]).map(d => {
+      const sentMap = {'positive':'sent-pos positive','negative':'sent-neg negative','neutral':'sent-neu text-muted'};
+      const sentClass = sentMap[d.impact] || 'sent-neu text-muted';
+      return `<div class="news-item">
+        <div class="news-meta">
+          <span class="news-sentiment ${d.impact==='positive'?'sent-pos':d.impact==='negative'?'sent-neg':'sent-neu'}">${d.impact?.toUpperCase()||'NEUTRAL'}</span>
+        </div>
+        <div class="news-title" style="font-weight:500">${d.headline||''}</div>
+        <div style="font-size:0.76rem;color:var(--muted);margin-top:4px">${d.relevance||''}</div>
+      </div>`;
+    }).join('');
+    html += '</div>';
+  }
+
+  if (news.length > 0) {
+    html += `<div class="analysis-section"><h3>🗞️ Latest News</h3>`;
+    html += news.map(n => `<div class="news-item">
+      <div class="news-meta">
+        <span class="news-source">${n.source||'Source'}</span>
+        <span class="news-sentiment ${n.sentiment==='positive'?'sent-pos':n.sentiment==='negative'?'sent-neg':'sent-neu'}">${(n.sentiment||'neutral').toUpperCase()}</span>
+      </div>
+      <div class="news-title">${n.title||''}</div>
+      ${n.portfolioImpact ? `<div style="font-size:0.75rem;color:var(--muted);margin-top:4px;font-style:italic">${n.portfolioImpact}</div>` : ''}
+    </div>`).join('');
+    html += '</div>';
+  }
+
+  if (!html) html = '<div style="color:var(--muted)">No news data available. Try running analysis again.</div>';
+
+  document.getElementById('newsContent').className = 'analysis-box';
+  document.getElementById('newsContent').innerHTML = html;
+}
+
+function renderRecommendations(result) {
+  const rec = result.recommendations || {};
+  let html = '';
+
+  if ((rec.immediate||[]).length > 0) {
+    html += `<div style="margin-bottom:20px"><div class="card-title"><span class="card-title-icon">⚡</span> Immediate Actions</div>
+      <div class="rec-grid">
+        ${(rec.immediate||[]).map(r=>{
+          const cls = {'BUY':'buy','SELL':'sell','HOLD':'hold','SIP':'buy'}[r.action?.toUpperCase()] || 'hold';
+          return `<div class="rec-card ${cls}">
+            <div class="rec-action">${r.action||''}</div>
+            <div class="rec-name">${r.instrument||''}</div>
+            <div class="rec-reason">${r.reason||''}</div>
+            ${r.amount ? `<div style="margin-top:8px;font-family:'DM Mono',monospace;font-size:0.75rem;color:var(--text)">${r.amount}</div>` : ''}
+          </div>`;
+        }).join('')}
+      </div>
+    </div>`;
+  }
+
+  if ((rec.newOpportunities||[]).length > 0) {
+    html += `<div><div class="card-title"><span class="card-title-icon">🚀</span> New Investment Opportunities</div>
+      <div class="rec-grid">
+        ${(rec.newOpportunities||[]).map(r=>`
+          <div class="rec-card buy">
+            <div class="rec-action">EXPLORE · ${r.type||'MF'}</div>
+            <div class="rec-name">${r.name||''}</div>
+            <div class="rec-reason">${r.rationale||''}</div>
+            ${r.suggestedAllocation ? `<div style="margin-top:8px;font-family:'DM Mono',monospace;font-size:0.75rem;color:var(--accent)">Suggested: ${r.suggestedAllocation}</div>` : ''}
+          </div>`).join('')}
+      </div>
+    </div>`;
+  }
+
+  if (!html) html = '<div style="color:var(--muted)">No recommendations generated. Try again.</div>';
+  document.getElementById('recsContent').innerHTML = html;
+}
+
+init();
+</script>
+</body>
+</html>
